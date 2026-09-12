@@ -95,6 +95,27 @@
         { "display": "Gemini 2.5 Flash", "id": "gemini-2.5-flash" },
         { "display": "Gemini 2.5 Flash Lite", "id": "gemini-2.5-flash-lite" }
       ]
+    },
+    {
+      "name": "Pi",
+      "company": "Earendil Works",
+      "defaultModel": "",
+      "isBuiltIn": true,
+      "modelSource": "pi",
+      "defaultPrompt" : "",
+      "searchPaths": {
+        "win": [
+          "%LOCALAPPDATA%/hermes/node/pi.cmd",
+          "%APPDATA%/npm/pi.cmd",
+          "%USERPROFILE%/.nvm/versions/node/**/bin/pi.cmd"
+        ],
+        "mac": [
+          "%USERPROFILE%/.local/bin/pi",
+          "%USERPROFILE%/.nvm/versions/node/**/bin/pi",
+          "/opt/homebrew/bin/pi",
+          "/usr/local/bin/pi"
+        ]
+      }
     }
   ]
 }

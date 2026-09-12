@@ -4,8 +4,32 @@ namespace Rhino.AI;
 
 /// <summary>A definition of an AI Agent</summary>
 
-internal sealed record AgentDefinition(string Name, SearchPaths SearchPaths, IReadOnlyList<ModelSpec> Models, string DefaultModel = "default", string DefaultPrompt = "", bool Enabled = true)
+internal sealed record AgentDefinition
 {
+    public string Name { get; set; } = string.Empty;
+    public SearchPaths SearchPaths { get; set; } = new();
+
+    // When "pi", Models is resolved live from the local pi config (see PiModelCatalog) instead of
+    // being maintained in Definitions.json. Any other value (or null) means the models array in
+    // Definitions.json is authoritative.
+    public string? ModelSource { get; set; }
+
+    public string DefaultModel { get; set; } = "default";
+    public string DefaultPrompt { get; set; } = "";
+    public bool Enabled { get; set; } = true;
+
+    [JsonIgnore] private IReadOnlyList<ModelSpec>? _models;
+
+    public IReadOnlyList<ModelSpec> Models
+    {
+        get => _models ??= ResolveModels();
+        set => _models = value ?? [];
+    }
+
+    private IReadOnlyList<ModelSpec> ResolveModels() =>
+        string.Equals(ModelSource, "pi", StringComparison.OrdinalIgnoreCase)
+            ? PiModelCatalog.Load()
+            : [];
 
     public bool Available => SearchPaths.GetPaths().Any();
 
@@ -24,6 +48,7 @@ internal sealed record AgentDefinition(string Name, SearchPaths SearchPaths, IRe
         "claude" => new AgentRunner(this, docTitle, (client, convo, cwd) => new StreamJsonAgent(this, client, convo, cwd, new ClaudeStreamJsonParser(this))),
         "codex" => new AgentRunner(this, docTitle, (client, convo, cwd) => new StreamJsonAgent(this, client, convo, cwd, new CodexStreamJsonParser(this, CodexHome.Prepare()))),
         "gemini" => new AgentRunner(this, docTitle, (client, _, cwd) => GeminiConnection.Connect(this, client, cwd)),
+        "pi" => new AgentRunner(this, docTitle, (client, convo, cwd) => new StreamJsonAgent(this, client, convo, cwd, new PiStreamJsonParser(this))),
 
         // TODO : Use a better result
         _ => throw new NotImplementedException($"{Name} is not configured")
