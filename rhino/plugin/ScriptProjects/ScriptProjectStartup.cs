@@ -11,22 +11,27 @@ internal static class ScriptProjectStartup
 
     public static void ReloadWhenIdle()
     {
-        if (Scheduled || !ScriptProjectRunner.IsSupportedRhino)
-            return;
+        if (Scheduled) return;
+        Scheduled = true;
+        
+        if (!ScriptProjectRunner.IsSupportedRhino) return;
+        
+        RhinoApp.Initialized += Initialized;
+    }
+
+    private static void Initialized(object? _, EventArgs __)
+    {
+        RhinoApp.Initialized -= Initialized;
+        RhinoApp.Idle += Idle;
+    }
+
+    private static void Idle(object? _, EventArgs __)
+    {
+        if (RhinoDoc.ActiveDoc is null) return;
+        RhinoApp.Idle -= Idle;
 
         // Ignore if no Project exists
         if (!File.Exists(ScriptProjectPaths.For(null).ProjectFile)) return;
-
-        Scheduled = true;
-        RhinoApp.Idle += Reload;
-    }
-
-    private static void Reload(object? sender, EventArgs e)
-    {
-        RhinoApp.Idle -= Reload;
-
-        if (RhinoDoc.ActiveDoc is not RhinoDoc doc)
-            return;
 
         try
         {
