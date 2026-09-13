@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 namespace Rhino.AI;
 
 /// <summary>A definition of an AI Agent</summary>
-
 internal sealed record AgentDefinition(string Name, SearchPaths SearchPaths, IReadOnlyList<ModelSpec> Models, string DefaultModel = "default", string DefaultPrompt = "", bool Enabled = true)
 {
 

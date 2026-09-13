@@ -17,6 +17,9 @@ public class RhinoAIPlugin : PlugIn
 
     protected override LoadReturnCode OnLoad(ref string errorMessage)
     {
+        if (RouterStaging.EnsureStaged().StagingError is string stagingError)
+            RhinoApp.WriteLine($"RhinoAI: could not stage the MCP router ({stagingError}).");
+
         Rhino.UI.Panels.RegisterPanel(this, typeof(AIPanel), "AI", LoadPanelIcon(), Rhino.UI.PanelType.PerDoc);
 
         WasStartedViaAgent = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(MCPSpawnCommand.PortEnvVar));
