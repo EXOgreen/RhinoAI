@@ -20,10 +20,9 @@ namespace Rhino.AI.UI;
 [JsonDerivedType(typeof(OpenUrlCommand), "url.open")]
 [JsonDerivedType(typeof(ClipboardCommand), "clipboard.write")]
 [JsonDerivedType(typeof(OpenMenuCommand), "menu.open")]
-internal abstract record PanelCommand { }
+internal abstract partial record PanelCommand { }
 
 internal sealed record ReadyCommand : PanelCommand;
-// internal sealed record PromptCommand(PromptRequest Request) : IPanelCommand;
 internal sealed record CancelCommand : PanelCommand;
 internal sealed record NewConversationCommand : PanelCommand;
 internal sealed record LoadConversationCommand(string SessionId) : PanelCommand;
@@ -50,5 +49,3 @@ internal sealed record OpenMenuCommand(
     string Selection) : PanelCommand;
 
 internal sealed record QuestionAnswer(string Id, IReadOnlyList<string> Answers);
-
-// internal sealed record PromptRequest(string Text, IReadOnlyList<PanelAttachment> Attachments);

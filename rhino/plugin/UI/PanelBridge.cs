@@ -3,7 +3,7 @@ using Eto.Forms;
 
 namespace Rhino.AI.UI;
 
-internal class NewPanelBridge
+internal class PanelBridge
 {
 
     public string Id { get; } = Guid.NewGuid().ToString();
@@ -12,11 +12,12 @@ internal class NewPanelBridge
 
     private Action<PanelCommand?> CommandReceiver { get; }
 
-    public NewPanelBridge(WebView view, Action<PanelCommand?> commandReceiver)
+    public PanelBridge(WebView view, Action<PanelCommand?> commandReceiver)
     {
         View = view;
         CommandReceiver = commandReceiver;
         View.MessageReceived += HandleReceived;
+        View.DocumentLoading += HandleLoading;
         View.DocumentLoaded += HandleBackLog;
     }
 
@@ -24,7 +25,7 @@ internal class NewPanelBridge
     {
         try
         {
-            PanelCommand? command = NewPanelJson.Deserialize(e.Message);
+            PanelCommand? command = PanelJson.Deserialize(e.Message);
             CommandReceiver?.Invoke(command);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
@@ -34,25 +35,31 @@ internal class NewPanelBridge
         }
     }
 
+    // Control.Loaded means the control is attached, not that a page exists, so the document is tracked separately.
+    private bool IsPageLoaded { get; set; }
+
+    private void HandleLoading(object? _, WebViewLoadingEventArgs e) => IsPageLoaded = false;
+
     private void HandleBackLog(object? _, WebViewLoadedEventArgs e)
     {
-        while (Backlog.TryDequeue(out WebPanel.PanelEvent? @event))
+        IsPageLoaded = true;
+        while (Backlog.TryDequeue(out PanelEvent? @event))
         {
             if (@event is null) continue;
             Post(@event);
         }
     }
 
-    private Queue<WebPanel.PanelEvent> Backlog { get; } = new();
-    public void Post(WebPanel.PanelEvent value)
+    private Queue<PanelEvent> Backlog { get; } = new();
+    public void Post(PanelEvent value)
     {
-        if (!View.Loaded)
+        if (!IsPageLoaded)
         {
             Backlog.Enqueue(value);
             return;
         }
 
-        string script = $"window.rhinoAI && window.rhinoAI.receive({NewPanelJson.Serialize(value)});";
+        string script = $"window.rhinoAI && window.rhinoAI.receive({PanelJson.Serialize(value)});";
         Task task = View.ExecuteScriptAsync(script);
         task.ContinueWith(
             static t => RhinoApp.WriteLine($"[rhino-ai] panel script failed: {t.Exception?.GetBaseException().Message}"),

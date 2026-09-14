@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
-namespace Rhino.AI.WebPanel;
+namespace Rhino.AI.UI;
 
 // The host -> panel half of the wire protocol. One closed union, discriminated on "type", matching
 // HostEvent in rhino/panel/src/protocol/events.ts.

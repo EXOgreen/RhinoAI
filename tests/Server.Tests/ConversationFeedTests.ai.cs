@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using Rhino.AI.WebPanel;
+using Rhino.AI.UI;
 
 namespace Rhino.AI.Server.Tests;
 
