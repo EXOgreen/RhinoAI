@@ -44,6 +44,14 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const MINTED_NAME = /^(?:[a-z]+[-_])?(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{32})$/i;
+
+/** What to call an image in a caption: a generated file is named with a uuid, which tells the reader nothing. */
+export function imageLabel(name: string): string {
+  const stem = name.replace(/\.[^.]+$/, '');
+  return stem.length > 0 && MINTED_NAME.test(stem) ? 'Generated image' : name;
+}
+
 export function prettyJson(value: unknown): string {
   if (value === undefined) return '';
   if (typeof value === 'string') return value;
