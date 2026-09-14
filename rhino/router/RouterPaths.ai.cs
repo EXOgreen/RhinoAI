@@ -25,7 +25,7 @@ public static class RouterPaths
             string? overrideRoot = Environment.GetEnvironmentVariable(HomeOverrideEnvVar);
             string root = string.IsNullOrEmpty(overrideRoot)
                 ? Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                     VendorDirName,
                     RhinoDirName)
                 : overrideRoot;
