@@ -138,11 +138,11 @@ internal static class PanelStrings
         ["format.hoursAgo"] = LOC.STR("{0}h ago"),
         ["format.daysAgo"] = LOC.STR("{0}d ago"),
 
-        ["unsupported.title"] = LOC.STR("This panel needs a newer system WebView"),
-        ["unsupported.body"] = LOC.STR("The panel renders in the WebView that comes with your operating system, so updating the OS (macOS ships WebKit with Safari) is what fixes it."),
-        ["unsupported.macos"] = LOC.STR("Every Apple Silicon Mac can run a recent macOS, so this usually just means pending system updates."),
-        ["unsupported.classic"] = LOC.STR("The classic AI panel keeps working in the meantime."),
-        ["unsupported.showAnyway"] = LOC.STR("Show it anyway"),
+        ["unsupported.title"] = "This panel needs a newer system WebView",
+        ["unsupported.body"] = "The panel renders in the WebView that comes with your operating system, so updating the OS (macOS ships WebKit with Safari) is what fixes it.",
+        ["unsupported.macos"] = "Every Apple Silicon Mac can run a recent macOS, so this usually just means pending system updates.",
+        ["unsupported.classic"] = "The classic AI panel keeps working in the meantime.",
+        ["unsupported.showAnyway"] = "Show it anyway",
     };
 
     public static string LanguageTag() => Localization.CurrentLanguageId switch
