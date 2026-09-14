@@ -19,6 +19,7 @@ import {
   type PlanStep,
   type TokenUsage,
   type ToolCall,
+  type TurnImage,
   type TurnSnapshot,
   type TurnStatus,
 } from '../protocol/events.js';
@@ -26,6 +27,7 @@ import {
 export type BlockView =
   | { kind: 'text'; id: string; at: string; text: Signal<string> }
   | { kind: 'tool'; id: string; call: Signal<ToolCall> }
+  | { kind: 'image'; id: string; image: TurnImage }
   | { kind: 'notice'; id: string; level: NoticeLevel; text: string };
 
 export interface TurnView {
@@ -63,6 +65,8 @@ function blockFrom(snapshot: BlockSnapshot): BlockView {
       return { kind: 'text', id: snapshot.id, at: snapshot.at, text: signal(snapshot.text) };
     case 'tool':
       return { kind: 'tool', id: snapshot.id, call: signal(snapshot.call) };
+    case 'image':
+      return { kind: 'image', id: snapshot.id, image: snapshot.image };
     case 'notice':
       return { kind: 'notice', id: snapshot.id, level: snapshot.level, text: snapshot.text };
   }
@@ -204,6 +208,15 @@ export class Store {
           ?.blocks()
           .find((b): b is Extract<BlockView, { kind: 'tool' }> => b.kind === 'tool' && b.id === event.callId);
         block?.call.set((call) => ({ ...call, ...event.patch }));
+        return;
+      }
+
+      // A replay re-announces every image under the same id, so the second one is the row already drawn.
+      case 'turn.image': {
+        const turn = this.turn(event.turnId);
+        if (!turn) return;
+        if (turn.blocks().some((block) => block.id === event.image.id)) return;
+        turn.blocks.set((blocks) => [...blocks, { kind: 'image', id: event.image.id, image: event.image }]);
         return;
       }
 

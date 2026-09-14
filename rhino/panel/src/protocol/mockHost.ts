@@ -259,6 +259,16 @@ function seeded(): ConversationSnapshot {
             },
           },
           {
+            kind: 'image',
+            id: 'img-seed-2',
+            image: {
+              id: 'img-seed-2',
+              name: 'planarity-heatmap.png',
+              src: viewportCapture(),
+              bytes: 486_213,
+            },
+          },
+          {
             kind: 'text',
             id: 'block-seed-2',
             at: new Date(start + 123_000).toISOString(),
@@ -279,6 +289,8 @@ function seeded(): ConversationSnapshot {
               '- 6 panels under 10 mm, which most glaziers will cold-bend without complaint',
               '',
               '> The 41.6 mm one is the corner panel at level 14. That one wants splitting into two triangles rather than bending.',
+              '',
+              'The heatmap is saved at [planarity heatmap](</Users/Scott Davidson/Rhino renders/planarity heatmap.png>).',
               '',
               'Say the word and I will split the four worst into triangles.',
             ),
@@ -731,6 +743,17 @@ const SCENARIOS: readonly Scenario[] = [
       await host.tool(turnId, script, 'get_viewport_image', 'captured Perspective', { width: 1120, height: 680 }, 700, {
         preview: { kind: 'image', dataUrl: viewportCapture(), caption: 'Perspective · 1120 × 680 · shaded' },
         result: { width: 1120, height: 680, display: 'Shaded' },
+      });
+
+      host.emit({
+        type: 'turn.image',
+        turnId,
+        image: {
+          id: 'img-render',
+          name: 'exec-91909287-454a-419b-86b5-6f883204d8cd.png',
+          src: viewportCapture(),
+          bytes: 3_659_122,
+        },
       });
 
       host.status(null);

@@ -1,6 +1,6 @@
 using Rhino.UI;
 
-namespace Rhino.AI.WebPanel;
+namespace Rhino.AI.UI;
 
 // The panel is TypeScript in a webview, which Rhino's string extractor cannot read, so its English lives here.
 internal static class PanelStrings
@@ -39,6 +39,11 @@ internal static class PanelStrings
         ["tool.arguments"] = LOC.STR("arguments"),
         ["tool.result"] = LOC.STR("result"),
         ["tool.noResult"] = LOC.STR("No result reported, so this may or may not have run."),
+
+        ["image.generated"] = LOC.STR("Generated image"),
+        ["image.openNamed"] = LOC.STR("Open {0} in your image viewer"),
+        ["image.saveNamed"] = LOC.STR("Save {0}"),
+        ["image.save"] = LOC.STR("Save"),
 
         ["preview.captured"] = LOC.STR("Captured viewport"),
         ["preview.revealObject"] = LOC.STR("Select and zoom to this object in Rhino"),

@@ -2,7 +2,7 @@ using System.IO;
 
 using Eto.Forms;
 
-namespace Rhino.AI.WebPanel;
+namespace Rhino.AI.UI;
 
 // Picking lives here, not in the page: a WKWebView has no open panel, so <input type="file"> does nothing on macOS.
 internal static class AttachmentPicker

@@ -34,6 +34,11 @@ export const EN = {
   'tool.result': 'result',
   'tool.noResult': 'No result reported, so this may or may not have run.',
 
+  'image.generated': 'Generated image',
+  'image.openNamed': 'Open {0} in your image viewer',
+  'image.saveNamed': 'Save {0}',
+  'image.save': 'Save',
+
   'preview.captured': 'Captured viewport',
   'preview.revealObject': 'Select and zoom to this object in Rhino',
   'preview.wireCount': '{0} wires',
