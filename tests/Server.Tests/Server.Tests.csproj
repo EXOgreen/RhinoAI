@@ -48,6 +48,9 @@
     <Compile Include="../../rhino/plugin/UI/PanelEvents.ai.cs" LinkBase="PanelSources" />
     <Compile Include="../../rhino/plugin/UI/PanelJson.cs" LinkBase="PanelSources" />
     <Compile Include="../../rhino/plugin/UI/ToolChips.ai.cs" LinkBase="PanelSources" />
+    <Compile Include="../../rhino/plugin/UI/ServedImages.ai.cs" LinkBase="PanelSources" />
+    <Compile Include="../../rhino/plugin/UI/ImageMentions.ai.cs" LinkBase="PanelSources" />
+    <Compile Include="../../rhino/plugin/UI/GeneratedImages.ai.cs" LinkBase="PanelSources" />
     <Compile Include="../../rhino/plugin/UI/ConversationFeed.ai.cs" LinkBase="PanelSources" />
   </ItemGroup>
 

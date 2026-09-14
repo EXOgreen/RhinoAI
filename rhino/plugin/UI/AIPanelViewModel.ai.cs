@@ -113,20 +113,29 @@ internal partial class AIPanelViewModel : IDisposable
     private static async Task RespondAsync(HttpListenerContext context, byte[] page)
     {
         HttpListenerResponse response = context.Response;
+        string route = context.Request.Url?.AbsolutePath ?? string.Empty;
         try
         {
-            if (context.Request.Url?.AbsolutePath is "/")
+            if (route is "/")
             {
                 response.ContentType = "text/html; charset=utf-8";
                 response.ContentLength64 = page.Length;
                 await response.OutputStream.WriteAsync(page).ConfigureAwait(false);
+            }
+            else if (route.StartsWith(ServedImages.Route, StringComparison.Ordinal)
+                && ServedImages.Resolve(route[ServedImages.Route.Length..]) is { } file)
+            {
+                response.ContentType = ServedImages.MediaType(file);
+                using FileStream bytes = File.OpenRead(file);
+                response.ContentLength64 = bytes.Length;
+                await bytes.CopyToAsync(response.OutputStream).ConfigureAwait(false);
             }
             else
             {
                 response.StatusCode = (int)HttpStatusCode.NotFound;
             }
         }
-        catch (Exception ex) when (ex is HttpListenerException or IOException or ObjectDisposedException)
+        catch (Exception ex) when (ex is HttpListenerException or IOException or ObjectDisposedException or UnauthorizedAccessException)
         {
             RhinoApp.WriteLine($"[rhino-ai] the AI panel could not serve its page: {ex.Message}");
         }
@@ -157,6 +166,8 @@ internal partial class AIPanelViewModel : IDisposable
             DismissQuestionCommand dismiss => Dismiss(dismiss.Ids),
             ToolChipCommand chip => RunToolChip(chip),
             PickAttachmentsCommand => PickAttachments(),
+            OpenImageCommand open => OpenImage(open.Id),
+            SaveImageCommand save => SaveImage(save.Id),
             SetZoomCommand zoom => SetZoom(zoom.Level),
             OpenSettingsCommand => OpenSettings(),
             OpenUrlCommand open => OpenUrl(open.Url),
@@ -234,7 +245,7 @@ internal partial class AIPanelViewModel : IDisposable
         }
 
         Unsubscribe();
-        Review = new ConversationFeed(Conversation.Restore(dto), Bridge.Post);
+        Review = new ConversationFeed(Conversation.Restore(dto), Bridge.Post, CodexHome.GeneratedImages);
         Review.Replay(readOnly: true);
         return true;
     }
@@ -373,6 +384,41 @@ internal partial class AIPanelViewModel : IDisposable
         return true;
     }
 
+    private static bool OpenImage(string id)
+    {
+        if (ServedImages.Resolve(id) is not { } path)
+            return false;
+
+        Application.Instance.Open(AsLink(path));
+        return true;
+    }
+
+    private bool SaveImage(string id)
+    {
+        if (ServedImages.Resolve(id) is not { } path)
+            return false;
+
+        Application.Instance.AsyncInvoke(() =>
+        {
+            string name = Path.GetFileName(path);
+            SaveFileDialog dialog = new() { Title = "Save image", FileName = name };
+            dialog.Filters.Add(new FileFilter(Path.GetExtension(path).TrimStart('.').ToUpperInvariant(), Path.GetExtension(path)));
+
+            if (dialog.ShowDialog(View) != DialogResult.Ok)
+                return;
+
+            try
+            {
+                File.Copy(path, dialog.FileName, overwrite: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+            {
+                Bridge.Post(new NoticeEvent("error", $"Could not save {name}: {ex.Message}"));
+            }
+        });
+        return true;
+    }
+
     private static bool SetZoom(double level)
     {
         AISettings.ZoomLevel = (int)Math.Round(level * 100);
@@ -391,8 +437,24 @@ internal partial class AIPanelViewModel : IDisposable
 
     private static bool OpenUrl(string url)
     {
-        Application.Instance.Open(url);
+        Application.Instance.Open(AsLink(url));
         return true;
+    }
+
+    // A bare local path is not a URL and only the Windows shell will take one, so both platforms are handed a file URI.
+    private static string AsLink(string url)
+    {
+        if (!Path.IsPathRooted(url))
+            return url;
+
+        try
+        {
+            return new Uri(url).AbsoluteUri;
+        }
+        catch (UriFormatException)
+        {
+            return url;
+        }
     }
 
     private static bool CopyToClipboard(string text)
@@ -525,7 +587,7 @@ internal partial class AIPanelViewModel : IDisposable
 
         Action handler = () => RhinoApp.InvokeOnUiThread(new Action(PumpIfLive));
         convo.Changed += handler;
-        Subscription = new ConversationSubscription(convo, new ConversationFeed(convo, Bridge.Post), handler);
+        Subscription = new ConversationSubscription(convo, new ConversationFeed(convo, Bridge.Post, CodexHome.GeneratedImages), handler);
     }
 
     private void Unsubscribe()

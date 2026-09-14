@@ -6,6 +6,7 @@ import type { Attachment, ContextItem, PlanStep } from '../protocol/events.js';
 import type { PanelContext } from './context.js';
 import { emptyState } from './empty.js';
 import { icon } from './icons.js';
+import { imageBlock } from './imageBlock.js';
 import { notices } from './notices.js';
 import { agentMessage } from './message.js';
 import { toolCard } from './toolCard.js';
@@ -88,6 +89,8 @@ function block(ctx: PanelContext, turn: TurnView, view: BlockView): Child {
       });
     case 'tool':
       return toolCard(ctx, view.call);
+    case 'image':
+      return imageBlock(ctx, view.image);
     case 'notice':
       return el('div', { class: 'lifecycle', text: view.text });
   }

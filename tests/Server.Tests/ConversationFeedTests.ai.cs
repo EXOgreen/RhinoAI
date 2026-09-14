@@ -159,6 +159,126 @@ public class ConversationFeedTests
         Assert.That(emitted.OfType<TurnBeginEvent>().Single().Turn.Attachments, Is.Empty);
     }
 
+    [Test]
+    public void A_render_the_agent_named_in_its_reply_becomes_an_image_on_the_turn()
+    {
+        using TempImages images = new();
+        string path = images.Write("exec-1.png");
+
+        List<PanelEvent> emitted = [];
+        Conversation convo = new(Guid.NewGuid(), "codex", "doc.3dm");
+        ConversationFeed feed = new(convo, emitted.Add);
+
+        convo.BeginTurn("render it");
+        convo.Record(TurnEventKind.AssistantText, $"Saved it to [the render](<{path}>).");
+        feed.Pump();
+
+        PanelImage image = emitted.OfType<TurnImageEvent>().Single().Image;
+        Assert.That(image.Name, Is.EqualTo("exec-1.png"));
+        Assert.That(image.Bytes, Is.EqualTo(4));
+        Assert.That(image.Src, Does.StartWith(ServedImages.Route));
+        Assert.That(ServedImages.Resolve(image.Id), Is.EqualTo(path));
+    }
+
+    [Test]
+    public void A_path_split_across_two_deltas_is_still_one_image()
+    {
+        using TempImages images = new();
+        string path = images.Write("split.png");
+        string mention = $"see [it](<{path}>) there";
+
+        List<PanelEvent> emitted = [];
+        Conversation convo = new(Guid.NewGuid(), "codex", "doc.3dm");
+        ConversationFeed feed = new(convo, emitted.Add);
+
+        convo.BeginTurn("render it");
+        convo.Record(TurnEventKind.AssistantText, mention[..(mention.Length / 2)]);
+        feed.Pump();
+        convo.Record(TurnEventKind.AssistantText, mention[(mention.Length / 2)..]);
+        feed.Pump();
+
+        Assert.That(emitted.OfType<TurnImageEvent>().Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void An_image_the_agent_wrote_but_never_mentioned_is_still_shown()
+    {
+        using TempImages images = new();
+
+        List<PanelEvent> emitted = [];
+        Conversation convo = new(Guid.NewGuid(), "codex", "doc.3dm");
+        ConversationFeed feed = new(convo, emitted.Add, images.Root);
+
+        convo.BeginTurn("render it");
+        string path = images.Write(Path.Combine("thread-1", "exec-2.png"));
+        convo.Record(TurnEventKind.AssistantText, "Created a photorealistic visualization of your current view.");
+        feed.Pump();
+
+        Assert.That(emitted.OfType<TurnImageEvent>().Single().Image.Name, Is.EqualTo(Path.GetFileName(path)));
+    }
+
+    [Test]
+    public void An_image_written_after_a_turn_finished_belongs_to_no_earlier_turn()
+    {
+        using TempImages images = new();
+
+        List<PanelEvent> emitted = [];
+        Conversation convo = new(Guid.NewGuid(), "codex", "doc.3dm");
+        ConversationFeed feed = new(convo, emitted.Add, images.Root);
+
+        convo.BeginTurn("say hello");
+        convo.CompleteTurn();
+        feed.Pump();
+
+        images.Write("later.png");
+        feed.Pump();
+
+        Assert.That(emitted.OfType<TurnImageEvent>(), Is.Empty);
+    }
+
+    [Test]
+    public void A_replay_re_announces_the_same_image_under_the_same_id()
+    {
+        using TempImages images = new();
+        string path = images.Write("stable.png");
+
+        List<PanelEvent> emitted = [];
+        Conversation convo = new(Guid.NewGuid(), "codex", "doc.3dm");
+        ConversationFeed feed = new(convo, emitted.Add);
+
+        convo.BeginTurn("render it");
+        convo.Record(TurnEventKind.AssistantText, $"[it](<{path}>)");
+        feed.Pump();
+        feed.Replay();
+
+        Assert.That(emitted.OfType<TurnImageEvent>().Select(static e => e.Image.Id).Distinct().Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void The_image_event_is_spelled_the_way_the_panel_reads_it()
+    {
+        string json = PanelJson.Serialize(new TurnImageEvent("turn-0", new PanelImage("a3f1", "render.png", "/image/a3f1", 4)));
+
+        Assert.That(json, Is.EqualTo("""{"type":"turn.image","turnId":"turn-0","image":{"id":"a3f1","name":"render.png","src":"/image/a3f1","bytes":4}}"""));
+    }
+
+    private sealed class TempImages : IDisposable
+    {
+        public string Root { get; } = Path.Combine(Path.GetTempPath(), $"rai-feed-{Guid.NewGuid():N}");
+
+        public TempImages() => Directory.CreateDirectory(Root);
+
+        public string Write(string relative)
+        {
+            string path = Path.Combine(Root, relative);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllBytes(path, [0x89, 0x50, 0x4E, 0x47]);
+            return path;
+        }
+
+        public void Dispose() => Directory.Delete(Root, recursive: true);
+    }
+
     private static string? StatusOf(IReadOnlyList<PanelEvent> emitted, string callId)
     {
         string? status = null;
