@@ -31,8 +31,7 @@ internal partial class AIPanelViewModel : IDisposable
         RhinoDoc.DeselectObjects += OnSelectionChanged;
         RhinoDoc.DeselectAllObjects += OnSelectionChanged;
 
-        Resubscribe();
-        Feed?.Replay();
+        ShowCurrent();
     }
 
     public void Detach()
@@ -181,8 +180,7 @@ internal partial class AIPanelViewModel : IDisposable
     private bool Ready()
     {
         SendEnvironment();
-        Resubscribe();
-        Feed?.Replay();
+        ShowCurrent();
         return true;
     }
 
@@ -230,8 +228,7 @@ internal partial class AIPanelViewModel : IDisposable
                 AgentHost.SetActive(doc, pinned);
         }
 
-        Resubscribe();
-        Feed?.Replay();
+        ShowLive();
         SendHistory();
         return true;
     }
@@ -252,9 +249,7 @@ internal partial class AIPanelViewModel : IDisposable
 
     private bool ExitReview()
     {
-        Review = null;
-        Resubscribe();
-        Feed?.Replay();
+        ShowLive();
         return true;
     }
 
@@ -278,10 +273,7 @@ internal partial class AIPanelViewModel : IDisposable
         }
 
         PinnedAgentName = dto.AgentName;
-        Review = null;
-        Unsubscribe();
-        Resubscribe();
-        Feed?.Replay();
+        ShowLive();
         SendAgents();
         SendHistory();
         return true;
@@ -297,9 +289,8 @@ internal partial class AIPanelViewModel : IDisposable
 
         PinnedAgentName = name;
         AgentHost.SetActive(doc, name);
-        Resubscribe();
+        ShowLive();
         SendAgents();
-        Feed?.Replay();
         return true;
     }
 
@@ -570,6 +561,25 @@ internal partial class AIPanelViewModel : IDisposable
 #endregion
 
 #region CONVERSATION
+
+    // A tab change unloads and reloads the panel, and a conversation opened from history is not the live one.
+    private void ShowCurrent()
+    {
+        if (Review is { } review)
+        {
+            review.Replay(readOnly: true);
+            return;
+        }
+
+        ShowLive();
+    }
+
+    private void ShowLive()
+    {
+        Review = null;
+        Resubscribe();
+        Feed?.Replay();
+    }
 
     private void Resubscribe()
     {
