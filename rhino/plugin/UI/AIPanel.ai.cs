@@ -58,6 +58,8 @@ public class AIPanel : Panel
             SendTheme();
             SendContext();
         };
+
+        Padding = 4;
         Content = View;
     }
 
