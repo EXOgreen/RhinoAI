@@ -9,7 +9,7 @@ internal class NewPanelBridge
     public string Id { get; } = Guid.NewGuid().ToString();
 
     private WebView View { get; }
-    
+
     private Action<PanelCommand?> CommandReceiver { get; }
 
     public NewPanelBridge(WebView view, Action<PanelCommand?> commandReceiver)
@@ -17,6 +17,7 @@ internal class NewPanelBridge
         View = view;
         CommandReceiver = commandReceiver;
         View.MessageReceived += HandleReceived;
+        View.DocumentLoaded += HandleBackLog;
     }
 
     private void HandleReceived(object? _, WebViewMessageEventArgs e)
@@ -33,16 +34,25 @@ internal class NewPanelBridge
         }
     }
 
+    private void HandleBackLog(object? _, WebViewLoadedEventArgs e)
+    {
+        while (Backlog.TryDequeue(out WebPanel.PanelEvent? @event))
+        {
+            if (@event is null) continue;
+            Post(@event);
+        }
+    }
+
+    private Queue<WebPanel.PanelEvent> Backlog { get; } = new();
     public void Post(WebPanel.PanelEvent value)
     {
+        if (!View.Loaded)
+        {
+            Backlog.Enqueue(value);
+            return;
+        }
+
         string script = $"window.rhinoAI && window.rhinoAI.receive({NewPanelJson.Serialize(value)});";
-
-        // if (!Loaded)
-        // {
-        //     Backlog.Enqueue(script);
-        //     return;
-        // }
-
         Task task = View.ExecuteScriptAsync(script);
         task.ContinueWith(
             static t => RhinoApp.WriteLine($"[rhino-ai] panel script failed: {t.Exception?.GetBaseException().Message}"),

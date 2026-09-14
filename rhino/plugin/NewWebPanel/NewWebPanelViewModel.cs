@@ -36,6 +36,7 @@ internal class NewWebPanelViewModel
     {
         _ = command switch
         {
+            // TODO : Events go here
             ReadyCommand => Ready(),
             CancelCommand => CancelCurrentAgentTurn(),
             
@@ -43,7 +44,7 @@ internal class NewWebPanelViewModel
         };
     }
 
-    private bool Ready() => false;
+    private bool Ready() => false; // TODO : 
 
     private bool CancelCurrentAgentTurn()
     {
