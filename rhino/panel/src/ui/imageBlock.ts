@@ -1,6 +1,7 @@
 import { el } from '../core/dom.js';
 import type { Child } from '../core/dom.js';
 import { signal } from '../core/signal.js';
+import { t } from '../i18n/t.js';
 import { formatBytes, imageLabel } from '../state/format.js';
 import type { TurnImage } from '../protocol/events.js';
 import type { PanelContext } from './context.js';
@@ -30,7 +31,7 @@ export function imageBlock(ctx: PanelContext, image: TurnImage): Child {
     picture,
     el(
       'button',
-      { type: 'button', class: 'img-open', title: `Open ${image.name} in your image viewer`, onClick: open },
+      { type: 'button', class: 'img-open', title: t('image.openNamed', image.name), onClick: open },
       icon('popOut', 13),
     ),
   );
@@ -49,11 +50,11 @@ export function imageBlock(ctx: PanelContext, image: TurnImage): Child {
         {
           type: 'button',
           class: 'img-save',
-          title: `Save ${image.name}`,
+          title: t('image.saveNamed', image.name),
           onClick: () => ctx.send({ type: 'image.save', id: image.id }),
         },
         icon('download', 13),
-        el('span', { text: 'Save' }),
+        el('span', { text: t('image.save') }),
       ),
     ),
   );
