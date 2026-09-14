@@ -63,15 +63,15 @@ function exeName() {
   return process.platform === "win32" ? "rhino-mcp-router.exe" : "rhino-mcp-router";
 }
 
-function localAppData() {
+function appData() {
   if (process.platform === "darwin") return join(homedir(), "Library", "Application Support");
-  if (process.platform === "win32") return process.env.LOCALAPPDATA || join(homedir(), "AppData", "Local");
-  return process.env.XDG_DATA_HOME || join(homedir(), ".local", "share");
+  if (process.platform === "win32") return process.env.APPDATA || join(homedir(), "AppData", "Roaming");
+  return process.env.XDG_CONFIG_HOME || join(homedir(), ".config");
 }
 
 function binDir() {
   const override = process.env.RHINO_MCP_HOME;
-  const root = override ? override : join(localAppData(), "McNeel", "Rhinoceros");
+  const root = override ? override : join(appData(), "McNeel", "Rhinoceros");
   return join(root, "ai", "bin");
 }
 

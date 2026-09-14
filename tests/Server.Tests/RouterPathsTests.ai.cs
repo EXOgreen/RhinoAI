@@ -33,7 +33,7 @@ public class RouterPathsTests
 
         Assert.That(RouterPaths.BaseDir, Does.EndWith(Path.Combine("McNeel", "Rhinoceros", "ai")));
         Assert.That(RouterPaths.BaseDir, Does.StartWith(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)));
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)));
     }
 
     [Test]
