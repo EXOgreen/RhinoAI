@@ -56,6 +56,8 @@
 
   <ItemGroup>
     <Compile Include="../../rhino/plugin/McpConfigEdit.ai.cs" LinkBase="PluginSources" />
+    <Compile Include="../../rhino/plugin/RouterStaging.ai.cs" LinkBase="PluginSources" />
+    <Compile Include="../../rhino/router/RouterPaths.ai.cs" LinkBase="PluginSources" />
     <Compile Include="../../rhino/plugin/Tools/QuestionSpec.cs" LinkBase="PluginSources" />
     <Compile Include="../../rhino/plugin/Tools/AskUserValidation.ai.cs" LinkBase="PluginSources" />
     <Compile Include="../../rhino/plugin/Tools/AskUserQuestion.ai.cs" LinkBase="PluginSources" />

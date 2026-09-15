@@ -23,6 +23,8 @@ internal sealed class McpServer : IDisposable
 
     public int Port { get; private set; }
 
+    public DateTime StartTime { get; private set; } = DateTime.UtcNow;
+
     public bool Start(RhinoDoc doc, int port)
     {
         if (HasStarted)
@@ -48,6 +50,8 @@ internal sealed class McpServer : IDisposable
             App.MapMcp("/agent", filtered: true);
 
             _ = App.RunAsync(Cts.Token);
+
+            StartTime = DateTime.UtcNow;
 
             RhinoApp.WriteLine($"[RhinoAI] MCP server currently running on http://localhost:{port}/ (in-Rhino agents use /agent)");
             return true;
