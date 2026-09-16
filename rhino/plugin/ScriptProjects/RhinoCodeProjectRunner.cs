@@ -53,7 +53,7 @@ internal class RhinoCodeProjectRunner : IProjectRunner
 
         if (CachedProject is null)
         {
-            ScriptingEnvironment.EnsurePythonRuntimeIsAvailable();
+            ScriptingEnvironment.EnsureCSharpRuntimeIsAvailable();
             
             Uri projectFilePath = new(Paths.ProjectFile);
 
@@ -126,16 +126,18 @@ internal class RhinoCodeProjectRunner : IProjectRunner
             if (result.Error is not null)
                 return result;
 
-            Uri scriptUri = new(Path.Combine(Paths.Directory, $"{commandName}.py"));
+            Uri scriptUri = new(Path.Combine(Paths.Directory, $"{commandName}.cs"));
+
+            script = RunCSharpTool.InjectUsings(script);
 
             Paths.Directory.EnsureDirectory();
 
-            EnsurePython3Header(ref script);
-
-            SourceCode validate = new(LanguageSpec.Python3, script);
+            SourceCode validate = new(LanguageSpec.CSharp, script);
 
             if (!validate.TryCreateCode(out Code code))
                 return Failure(ToolError.BadArgument, "Could not create code from script");
+
+            code.Inputs.Add(project.Server.GetArguments(code.Language.Id));
 
             if (!code.TryBuild(new BuildContext(BuildKind.Run), out CompileException ex))
             {
@@ -158,7 +160,7 @@ internal class RhinoCodeProjectRunner : IProjectRunner
 
             File.WriteAllText(scriptUri.LocalPath, script);
 
-            SourceCode source = new(LanguageSpec.Python3, commandName, script, scriptUri);
+            SourceCode source = new(LanguageSpec.CSharp, commandName, script, scriptUri);
 
             // Remove before update
             RemoveCommandFromProject(commandName);
@@ -177,14 +179,6 @@ internal class RhinoCodeProjectRunner : IProjectRunner
         {
             return Failure(anyEx);
         }
-    }
-
-    private static void EnsurePython3Header(ref string script)
-    {
-        const string HEADER = "#! python 3\n";
-        if (script.Trim().StartsWith(HEADER)) return;
-
-        script = script.Insert(0, HEADER);
     }
 
     public IToolResult RemoveCommandFromProject(string commandName)
@@ -222,7 +216,7 @@ internal class RhinoCodeProjectRunner : IProjectRunner
 
     public IToolResult Build(bool reloadOnly)
     {
-        ScriptingEnvironment.EnsurePythonRuntimeIsAvailable();
+        ScriptingEnvironment.EnsureCSharpRuntimeIsAvailable();
         try
         {
             IToolResult result = TryGetProject(out IProject project);
