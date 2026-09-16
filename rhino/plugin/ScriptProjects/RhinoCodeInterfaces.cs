@@ -16,6 +16,8 @@ internal enum Lang { Python3, CSharp }
 
 internal interface IProjectRunner
 {
+
+    public int CommandCount { get; }
     
     public ScriptProjectPaths Paths { get; }
 
