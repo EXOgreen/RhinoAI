@@ -31,8 +31,8 @@ internal sealed class McpServer : IDisposable
         {
             DocumentServices services = new(doc);
 
-            ExternalListener = Listen($"http://localhost:{port}/");
-            AgentListener = Listen($"http://localhost:{port}/agent/");
+            ExternalListener = Listen(port, ExternalRoute);
+            AgentListener = Listen(port, $"{AgentRoute}/");
 
             _ = AcceptAsync(ExternalListener, new McpDispatcher(services, filtered: false), ExternalRoute);
             _ = AcceptAsync(AgentListener, new McpDispatcher(services, filtered: true), AgentRoute);
@@ -50,12 +50,27 @@ internal sealed class McpServer : IDisposable
         }
     }
 
-    // localhost, not 127.0.0.1: Windows HTTP.SYS grants that host to unelevated processes without a URL reservation.
-    private static HttpListener Listen(string prefix)
+    // Both loopback spellings: a prefix is matched against the Host header, and on Unix it also picks the single address bound. Windows HTTP.SYS grants `localhost` unelevated, so the IP spelling degrades rather than failing the start.
+    private static HttpListener Listen(int port, string prefixPath)
+    {
+        try
+        { return Bind($"http://localhost:{port}{prefixPath}", $"http://127.0.0.1:{port}{prefixPath}"); }
+        catch (HttpListenerException)
+        { return Bind($"http://localhost:{port}{prefixPath}"); }
+    }
+
+    private static HttpListener Bind(params string[] prefixes)
     {
         HttpListener listener = new();
-        listener.Prefixes.Add(prefix);
-        listener.Start();
+        foreach (string prefix in prefixes)
+            listener.Prefixes.Add(prefix);
+        try
+        { listener.Start(); }
+        catch
+        {
+            listener.Close();
+            throw;
+        }
         return listener;
     }
 
@@ -67,7 +82,11 @@ internal sealed class McpServer : IDisposable
             try
             { ctx = await listener.GetContextAsync().ConfigureAwait(false); }
             catch (Exception ex) when (ex is HttpListenerException or ObjectDisposedException or InvalidOperationException)
-            { return; }
+            {
+                if (!Cts.IsCancellationRequested)
+                    RhinoApp.WriteLine($"[RhinoAI] MCP listener for {route} stopped accepting: {DescribeException(ex)}");
+                return;
+            }
 
             _ = Task.Run(() => ServeAsync(ctx, dispatcher, route));
         }
@@ -84,7 +103,7 @@ internal sealed class McpServer : IDisposable
             else
                 await dispatcher.HandleAsync(ctx, Cts.Token).ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is HttpListenerException or IOException or ObjectDisposedException)
+        catch (Exception ex) when (ex is HttpListenerException or IOException or ObjectDisposedException or OperationCanceledException)
         { }
         finally
         {

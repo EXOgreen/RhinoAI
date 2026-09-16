@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 
 namespace Rhino.AI.Server;
 
@@ -231,7 +230,6 @@ internal static class McpSerializer
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         // Non-finite doubles go out as "NaN"/"Infinity" strings (the protobuf and Newtonsoft convention) rather than throwing halfway through a response.
         NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
         Converters = { new LenientStringConverter(), new LenientBoolConverter(), new LenientIntConverter(), new FiniteDoubleConverter() },
     };
 }
