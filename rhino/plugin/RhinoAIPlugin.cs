@@ -17,16 +17,18 @@ public class RhinoAIPlugin : PlugIn
 
     protected override LoadReturnCode OnLoad(ref string errorMessage)
     {
-        Rhino.UI.Panels.RegisterPanel(this, typeof(AIPanel), "AI", LoadPanelIcon(), Rhino.UI.PanelType.PerDoc);
+        if (RouterStaging.EnsureStaged().StagingError is string stagingError)
+            RhinoApp.WriteLine($"RhinoAI: could not stage the MCP router ({stagingError}).");
+
+        Rhino.UI.Panels.RegisterPanel(this, typeof(UI.AIPanel), Rhino.UI.LOC.STR("AI"), LoadPanelIcon(), Rhino.UI.PanelType.PerDoc);
 
         WasStartedViaAgent = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(MCPSpawnCommand.PortEnvVar));
 
         if (WasStartedViaAgent || AIAutoLoad.ShouldAutoLoad())
         {
             CommandInterceptors = new CommandInterceptorHost();
-
-            RhinoDoc.NewDocument += RegisterNew;
-            RhinoDoc.EndOpenDocument += RegisterOpen;
+            RhinoAIHost.RegisterDocumentWatcher();
+            ScriptProjects.ScriptProjectStartup.ReloadWhenIdle();
         }
 
         return base.OnLoad(ref errorMessage);
@@ -63,39 +65,6 @@ public class RhinoAIPlugin : PlugIn
     {
         CommandInterceptors?.Dispose();
         AgentHost.Shutdown();
-    }
-
-    private void RegisterNew(object? sender, DocumentEventArgs e) => Register(e.Document);
-
-    private void RegisterOpen(object? sender, DocumentOpenEventArgs e)
-    {
-        if (e.Merge) return;
-        if (e.Reference) return;
-        Register(e.Document);
-    }
-
-    private void Register(RhinoDoc? doc)
-    {
-        if (doc is null) return;
-
-        RhinoDoc.NewDocument -= RegisterNew;
-        RhinoDoc.EndOpenDocument -= RegisterOpen;
-
-        if (!WasStartedViaAgent)
-        {
-            if (!RhinoAIHost.TryGetNextPort(out int port))
-            {
-                RhinoApp.WriteLine("RhinoAI's MCP server failed to start: no free port available.");
-            }
-            else if (!RhinoAIHost.StartOrRestart(doc, port, true))
-            {
-                RhinoApp.WriteLine("RhinoAI's MCP Server failed to start");
-            }
-        }
-
-        RhinoAIHost.RegisterDocumentWatcher();
-
-        ScriptProjects.ScriptProjectStartup.ReloadWhenIdle();
     }
 
     public override PlugInLoadTime LoadTime => PlugInLoadTime.AtStartup;

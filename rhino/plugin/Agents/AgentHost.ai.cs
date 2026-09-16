@@ -28,8 +28,13 @@ internal static class AgentHost
     // The active agent for the doc, resolved via the registry and pooled per (doc, name).
     // Returns false (rather than null) when discovery finds nothing usable, so callers can
     // surface a friendly message instead of faulting.
-    public static bool TryFor(RhinoDoc doc, out IAgentRunner agent)
+    public static bool TryFor(RhinoDoc? doc, out IAgentRunner agent)
     {
+        if (doc is null)
+        {
+            agent = default!;
+            return false;
+        }
         if (!TryResolveActiveDefinition(doc, out AgentDefinition def))
         {
             agent = default!;
