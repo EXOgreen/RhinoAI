@@ -225,11 +225,6 @@ internal sealed class ResourceContent
 
 internal static class McpSerializer
 {
-    // WebApplication.CreateSlimBuilder turns off
-    // JsonSerializer.IsReflectionEnabledByDefault, which makes JsonNode.ToJsonString
-    // and JsonSerializer.Serialize throw unless the options expose a TypeInfoResolver.
-    // DefaultJsonTypeInfoResolver brings the reflection path back in — we're not
-    // building for AOT/trim, we just inherited the slim host's defaults.
     public static JsonSerializerOptions Options { get; } = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
