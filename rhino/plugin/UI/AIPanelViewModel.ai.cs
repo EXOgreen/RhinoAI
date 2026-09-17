@@ -296,6 +296,8 @@ internal partial class AIPanelViewModel : IDisposable
 
     private bool Login()
     {
+        if (!RhinoApp.IsInternetAccessAllowed) return false;
+        
         if (Document is not { } doc)
             return false;
         if (!AgentHost.TryFor(doc, out IAgentRunner agent))

@@ -11,6 +11,12 @@ public abstract class AgentCommand : Command
 
     protected override Result RunCommand(RhinoDoc doc, RunMode mode)
     {
+        if (!RhinoApp.IsInternetAccessAllowed)
+        {
+            RhinoApp.WriteLine("Internet Access is set to do not allow.");
+            return Result.Cancel;
+        }
+
         // NOTE : On Rhino 8 Mac Get Literal String doesn't work so idk
         GetString get = new();
         get.SetCommandPrompt(EnglishName);

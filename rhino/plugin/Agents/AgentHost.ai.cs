@@ -52,11 +52,11 @@ internal static class AgentHost
     {
         if (ActiveNames.TryGetValue(doc.RuntimeSerialNumber, out string? active) &&
             AgentRegistry.Instance.TryGet(active, out def))
-            return true;
+            return def.Enabled;
 
         string defaultAgentName = AISettings.DefaultAgentName;
 
-        return AgentRegistry.Instance.TryGet(defaultAgentName, out def);
+        return AgentRegistry.Instance.TryGet(defaultAgentName, out def) && def.Enabled;
     }
 
     public static IAgentRunner For(RhinoDoc doc, Func<IAgentRunner> factory)
@@ -84,6 +84,12 @@ internal static class AgentHost
             return false;
         }
 
+        if (!def.Enabled)
+        {
+            agent = default!;
+            return false;
+        }
+
         (uint, string) key = (doc.RuntimeSerialNumber, def.Name);
         if (Agents.Remove(key, out IAgentRunner? prior))
             SafeDispose(prior);
@@ -92,7 +98,7 @@ internal static class AgentHost
         Agents[key] = resumed;
         SetActive(doc, def.Name);
         agent = resumed;
-        return true;
+        return def.Enabled;
     }
 
     // Resume a persisted conversation: restore its transcript and seed the stream-json CLI to launch
