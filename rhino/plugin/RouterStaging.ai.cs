@@ -13,10 +13,26 @@ internal static class RouterStaging
     private const string TrashExtension = ".old";
     private const string TempExtension = ".staging";
 
-    internal static string? PayloadDir =>
-        Path.GetDirectoryName(typeof(RouterStaging).Assembly.Location) is string pluginDir
-            ? Path.GetFullPath(Path.Combine(pluginDir, "..", "router", Rid))
-            : null;
+    // router/ lives at the root of the plug-in folder, but the .rhp is not always at that
+    // root: on macOS the output is flat (Plug-ins/RhinoAI/RhinoAI.rhp, router/ beside it),
+    // on Windows the .rhp sits in a net8.0 subfolder with router/ one level up. Probe both
+    // instead of assuming a layout; fall back to the sibling path so the error message from
+    // EnsureStaged names a sensible location when neither exists.
+    internal static string? PayloadDir
+    {
+        get
+        {
+            if (Path.GetDirectoryName(typeof(RouterStaging).Assembly.Location) is not string pluginDir)
+                return null;
+
+            string beside = Path.GetFullPath(Path.Combine(pluginDir, "router", Rid));
+            if (Directory.Exists(beside))
+                return beside;
+
+            string above = Path.GetFullPath(Path.Combine(pluginDir, "..", "router", Rid));
+            return Directory.Exists(above) ? above : beside;
+        }
+    }
 
     private static RouterStagingResult? Succeeded { get; set; }
 
