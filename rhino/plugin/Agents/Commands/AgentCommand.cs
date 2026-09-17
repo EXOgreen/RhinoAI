@@ -3,6 +3,7 @@ using Rhino.Input.Custom;
 
 namespace Rhino.AI;
 
+[Rhino.Commands.CommandStyle(Rhino.Commands.Style.Hidden)]
 public abstract class AgentCommand : Command
 {
     protected override string CommandContextHelpUrl => DocsLinks.Homepage;
