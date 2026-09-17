@@ -16,8 +16,6 @@ namespace Rhino.AI.ScriptProjects;
 internal class RhinoCodeProjectRunner : IProjectRunner
 {
 
-    public int CommandCount => CachedProject?.GetCodes().Count() ?? -1;
-
     private IProject? CachedProject { get; set; }
 
     public ScriptProjectPaths Paths { get; }
