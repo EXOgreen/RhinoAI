@@ -3,20 +3,17 @@ using System.Text.Json.Serialization;
 namespace Rhino.AI;
 
 /// <summary>A definition of an AI Agent</summary>
-
 internal sealed record AgentDefinition
 {
-    public string Name { get; set; } = string.Empty;
-    public SearchPaths SearchPaths { get; set; } = new();
 
-    // When "pi", Models is resolved live from the local pi config (see PiModelCatalog) instead of
-    // being maintained in Definitions.json. Any other value (or null) means the models array in
+    public string Name { get; init; }
+
+    public SearchPaths SearchPaths { get; init; }
+
+    // When "pi", Models is resolved live from the local pi installation (see PiModelCatalog) instead
+    // of being maintained in Definitions.json. Any other value (or null) means the models array in
     // Definitions.json is authoritative.
-    public string? ModelSource { get; set; }
-
-    public string DefaultModel { get; set; } = "default";
-    public string DefaultPrompt { get; set; } = "";
-    public bool Enabled { get; set; } = true;
+    public string? ModelSource { get; init; }
 
     [JsonIgnore] private IReadOnlyList<ModelSpec>? _models;
 
@@ -26,16 +23,40 @@ internal sealed record AgentDefinition
         set => _models = value ?? [];
     }
 
+    public string DefaultModel { get; init; }
+    public string DefaultPrompt { get; init; }
+
+    public bool Available => SearchPaths.GetPaths().Any();
+
+    public bool? LoggedIn { get; private set; } = null;
+
+    private bool PrivateEnabled { get; set; }
+    public bool Enabled
+    {
+        get => PrivateEnabled && RhinoApp.IsInternetAccessAllowed;
+        set => PrivateEnabled = value;
+    }
+
+    public AgentDefinition(string name, SearchPaths searchPaths, IReadOnlyList<ModelSpec>? models, string defaultModel = "default", string defaultPrompt = "", bool enabled = true, string? modelSource = null)
+    {
+        Name = name;
+        SearchPaths = searchPaths;
+        // A missing models key (null) must leave _models unset so the pi source can resolve lazily;
+        // an explicit empty array still means "no models".
+        if (models is not null)
+            Models = models;
+        DefaultModel = defaultModel;
+        DefaultPrompt = defaultPrompt;
+        Enabled = enabled;
+        ModelSource = modelSource;
+    }
+
     private IReadOnlyList<ModelSpec> ResolveModels() =>
         string.Equals(ModelSource, "pi", StringComparison.OrdinalIgnoreCase)
             // The exe path lets the catalog ask pi itself which models are actually available;
             // null (CLI not found) degrades to the full on-disk catalog.
             ? PiModelCatalog.Load(CliProcess.TryResolve(SearchPaths.GetPaths(), out string exe) ? exe : null)
             : [];
-
-    public bool Available => SearchPaths.GetPaths().Any();
-
-    public bool? LoggedIn { get; private set; } = null;
 
     public void EnsureLoggedIn()
     {
