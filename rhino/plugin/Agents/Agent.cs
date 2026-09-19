@@ -28,7 +28,9 @@ internal sealed record AgentDefinition
 
     private IReadOnlyList<ModelSpec> ResolveModels() =>
         string.Equals(ModelSource, "pi", StringComparison.OrdinalIgnoreCase)
-            ? PiModelCatalog.Load()
+            // The exe path lets the catalog ask pi itself which models are actually available;
+            // null (CLI not found) degrades to the full on-disk catalog.
+            ? PiModelCatalog.Load(CliProcess.TryResolve(SearchPaths.GetPaths(), out string exe) ? exe : null)
             : [];
 
     public bool Available => SearchPaths.GetPaths().Any();
