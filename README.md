@@ -1,3 +1,5 @@
+This is a fork that allows the AIPanel command to start pi on your local machine and use it as the agent to complete tasks in Rhino. You must have pi installed and configured with a provider/models before you can use it. This is a 100% AI generated addition on top of the RhinoAI plugin, I have done no code review an have no understanding of its structure or changes. I have tested this on Rhino 9 WIP and it works well, use at your own risk. Note that you could just connect to the MCP server from pi and ignore this entire plugin, but I wanted to see what was possible. 
+
 <div align="center">
 
 <picture>
